@@ -21,7 +21,7 @@ CONFIG = {
     "mapsLink": "https://maps.app.goo.gl/u7E9B6WDisxr2Chk8",
     "deliveryEstimate": 3,
     "dubaiExtra": 1.00,                  # recargo por cada Chocolate Dubai en caja mixta (por confirmar)
-    "menuUrl": "menu.html",
+    "menuUrl": "menu",
     "siteUrl": "https://www.miolunetto.com",  # ajusta si el dominio final es sin "www"
 }
 BOXES = {
@@ -84,8 +84,8 @@ ICON = {
 }
 WA = "https://wa.me/" + CONFIG["whatsapp"]
 
-NAV = [("index.html", "Inicio", "home"), ("menu.html", "Menú", "menu"), ("catering.html", "Catering", "catering"),
-       ("contacto.html", "Ubícanos", "contacto")]
+NAV = [("/", "Inicio", "home"), ("menu", "Menú", "menu"), ("catering", "Catering", "catering"),
+       ("contacto", "Ubícanos", "contacto")]
 
 def head(title, desc, extra=""):
     return f'''<!doctype html>
@@ -239,6 +239,13 @@ def symfix(h):
         else: attrs += ' class="sym"'
         return f"<{tag}{attrs}>{inner}</{tag}>"
     return re.sub(r"<(h[123]|blockquote)([^>]*)>(.*?)</\1>", one, h, flags=re.S)
+
+def clean_urls(h):
+    """Quita la extensión .html de los links internos (vercel.json sirve las páginas limpias)."""
+    def repl(m):
+        page, frag = m.group(1), m.group(2) or ""
+        return f'href="{"/" if page == "index" else page}{frag}"'
+    return re.sub(r'href="([a-zA-Z0-9_-]+)\.html(#[^"]*)?"', repl, h)
 
 # ============ PÁGINAS ============
 def page_home():
@@ -511,12 +518,12 @@ def page_politicas():
 def page_sitemap():
     pages = [
         ("", "weekly", "1.0"),
-        ("menu.html", "weekly", "0.9"),
-        ("catering.html", "monthly", "0.7"),
-        ("cotizar.html", "monthly", "0.7"),
-        ("catering-pdf.html", "monthly", "0.5"),
-        ("contacto.html", "monthly", "0.6"),
-        ("politicas.html", "yearly", "0.3"),
+        ("menu", "weekly", "0.9"),
+        ("catering", "monthly", "0.7"),
+        ("cotizar", "monthly", "0.7"),
+        ("catering-pdf", "monthly", "0.5"),
+        ("contacto", "monthly", "0.6"),
+        ("politicas", "yearly", "0.3"),
     ]
     today = __import__("datetime").date.today().isoformat()
     base = CONFIG["siteUrl"].rstrip("/")
@@ -530,7 +537,7 @@ def page_sitemap():
 def write(path, content):
     full = os.path.join(ROOT, path)
     os.makedirs(os.path.dirname(full), exist_ok=True)
-    if path.endswith(".html"): content = symfix(content)
+    if path.endswith(".html"): content = clean_urls(symfix(content))
     with open(full, "w", encoding="utf-8") as f: f.write(content)
 
 if __name__ == "__main__":
